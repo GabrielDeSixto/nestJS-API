@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { User } from './entities/user.entiti';
-import { CreateUserDto } from './user.dto';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { User } from './entities/user.entity';
+import { CreateUserDto, UpdateUserDto } from '../dtos/user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -11,53 +11,63 @@ export class UsersService {
     private usersRepository: Repository<User>,
   ) { }
 
-  findAll() {
-    return this.usersRepository.find();
+  async findAll() {
+    const users = await this.usersRepository.find(); // es un select * from users sin where
+    return users;
   }
 
-  private findOne(id: string) {
-    const position = this.users.findIndex((user) => user.id === id);
-    if (position === -1) {
+  private async findOne(id: number) {
+    const user = await this.usersRepository.findOne({ 
+      where: { id },
+      relations: ['profile'],
+     });
+    if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
-    return position;
+    return user;
   }
 
-  getUserById(id: string) {
-    const position = this.findOne(id);
-    const user = this.users[position];
-    if (user.id === '1') {
+  async getUserById(id: number) {
+    const user = await this.findOne(id);
+    if (user.id === 1) {
       throw new ForbiddenException('You are not allowed to access this user');
     }
     return user;
   }
 
-  create(body: CreateUserDto) {
-    const newUser = {
-      ...body,
-      id: `${new Date().getTime()}`,
-    };
-    this.users.push(newUser);
-    return newUser;
+  async getProfileById(id: number) {
+    const user = await this.findOne(id);
+    return user.profile;
   }
 
-  update(id: string, user: CreateUserDto) {
-    const position = this.findOne(id);
-    const currentData = this.users[position];
-    const updatedUser = {
-      ...currentData,
-      ...user,
-      id,
-    };
-    this.users[position] = updatedUser;
-    return updatedUser;
+  async create(body: CreateUserDto) {
+    try {
+      const newUser = await this.usersRepository.save(body);
+      return newUser;
+    } catch (error) {
+      throw new BadRequestException('Error creating user');
+    }
   }
 
-  delete(id: string) {
-    const position = this.findOne(id);
-    this.users.splice(position, 1);
-    return {
-      message: `User with id ${id} deleted`,
-    };
+  async update(id: number, changes: UpdateUserDto) {
+    try {
+      const user = await this.findOne(id);
+      const updatedUser = this.usersRepository.merge(user, changes);
+      const savedUser = await this.usersRepository.save(updatedUser);
+      return savedUser;
+    } catch (error) {
+      throw new BadRequestException('Error updating user');
+    }
+  }
+
+  async delete(id: number) {
+    try {
+      await this.usersRepository.delete(id);
+      return {
+        message: `User with id ${id} deleted`,
+      };
+    } catch (error) {
+      throw new BadRequestException('Error deleting user');
+    }
   }
 }

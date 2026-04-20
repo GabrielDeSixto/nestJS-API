@@ -1,8 +1,9 @@
-import { Column, Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, JoinColumn, OneToOne } from "typeorm";
+import { Profile } from "./profile.entity";
 
 @Entity({ name: 'users' })
 export class User {
-    @PrimaryGeneratedColumn('uuid')
+    @PrimaryGeneratedColumn()
     id: number;
 
     @Column({ type: 'varchar', length: 255, unique: true })
@@ -24,4 +25,8 @@ export class User {
         name: 'updated_at'
     })
     updatedAt: Date;
+
+    @OneToOne(() => Profile, { nullable: false, cascade: true })
+    @JoinColumn({ name: 'profile_id' })
+    profile: Profile;
 }

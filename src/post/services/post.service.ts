@@ -68,4 +68,11 @@ export class PostService {
       throw new BadRequestException('Error deleting post');
     }
   }
+  async getPostByCategoryId(categoryId: number) {
+    const posts = await this.postsRepository.find({
+      where: { categories: { id: categoryId } },
+      relations: ['user.profile', 'categories']
+    });
+    return posts;
+  }
 }

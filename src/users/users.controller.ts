@@ -29,4 +29,9 @@ export class UsersController {
   updateUser(@Param('id', ParseIntPipe) id: number, @Body() changes: UpdateUserDto) {
     return this.usersService.update(id, changes);
   }
+
+  @Get(':id/posts')
+  getUserPosts(@Param('id', ParseIntPipe) id: number) {
+    return this.usersService.findAllPostsByUserId(id);
+  }
 }

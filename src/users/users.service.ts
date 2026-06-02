@@ -70,4 +70,15 @@ export class UsersService {
       throw new BadRequestException('Error deleting user');
     }
   }
+
+  async findAllPostsByUserId(id: number) {
+    const user = await this.usersRepository.findOne({
+      where: { id },
+      relations: ['posts']
+    });
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+    return user.posts;
+  }
 }
